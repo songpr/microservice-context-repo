@@ -1,0 +1,802 @@
+openapi: 3.0.3
+info:
+  title: Customer Profile API
+  description: |
+    Unified customer profile management API for the Enterprise CX Solution.
+    Provides comprehensive customer data management, interaction history, and preferences.
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://docs.enterprise-cx.com/support
+    email: api-support@enterprise-cx.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.enterprise-cx.com/v1
+    description: Production environment
+  - url: https://api-staging.enterprise-cx.com/v1
+    description: Staging environment
+  - url: https://api-dev.enterprise-cx.com/v1
+    description: Development environment
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  /customers:
+    get:
+      summary: List customers
+      description: Retrieve a paginated list of customers with optional filtering
+      operationId: listCustomers
+      tags:
+        - Customer Management
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: search
+          in: query
+          description: Search term for customer name or email
+          required: false
+          schema:
+            type: string
+            example: "john.doe@example.com"
+        - name: segment
+          in: query
+          description: Customer segment filter
+          required: false
+          schema:
+            type: string
+            enum: [premium, standard, basic]
+        - name: status
+          in: query
+          description: Customer status filter
+          required: false
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomerSummary'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create customer
+      description: Create a new customer profile
+      operationId: createCustomer
+      tags:
+        - Customer Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreate'
+      responses:
+        '201':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /customers/{customerId}:
+    get:
+      summary: Get customer
+      description: Retrieve a specific customer profile by ID
+      operationId: getCustomer
+      tags:
+        - Customer Management
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update customer
+      description: Update a customer profile
+      operationId: updateCustomer
+      tags:
+        - Customer Management
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdate'
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete customer
+      description: Delete a customer profile (soft delete)
+      operationId: deleteCustomer
+      tags:
+        - Customer Management
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '204':
+          description: Customer deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /customers/{customerId}/interactions:
+    get:
+      summary: Get customer interactions
+      description: Retrieve interaction history for a specific customer
+      operationId: getCustomerInteractions
+      tags:
+        - Customer Interactions
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: channel
+          in: query
+          description: Filter by communication channel
+          required: false
+          schema:
+            type: string
+            enum: [phone, chat, email, sms, social]
+        - name: startDate
+          in: query
+          description: Start date for interaction history (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: End date for interaction history (ISO 8601)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interaction'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create interaction
+      description: Record a new customer interaction
+      operationId: createInteraction
+      tags:
+        - Customer Interactions
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionCreate'
+      responses:
+        '201':
+          description: Interaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication service
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for service-to-service authentication
+
+  parameters:
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      description: Unique identifier for the customer
+      schema:
+        type: string
+        format: uuid
+        example: "123e4567-e89b-12d3-a456-426614174000"
+    
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Page number for pagination (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+    
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+
+  schemas:
+    Customer:
+      type: object
+      required:
+        - customerId
+        - email
+        - firstName
+        - lastName
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          description: Unique identifier for the customer
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          description: Customer's primary email address
+          example: "john.doe@example.com"
+        firstName:
+          type: string
+          description: Customer's first name
+          example: "John"
+        lastName:
+          type: string
+          description: Customer's last name
+          example: "Doe"
+        phoneNumber:
+          type: string
+          description: Customer's primary phone number
+          example: "+1-555-123-4567"
+        dateOfBirth:
+          type: string
+          format: date
+          description: Customer's date of birth
+          example: "1990-01-15"
+        address:
+          $ref: '#/components/schemas/Address'
+        preferences:
+          $ref: '#/components/schemas/CustomerPreferences'
+        segment:
+          type: string
+          enum: [premium, standard, basic]
+          description: Customer segment classification
+          example: "premium"
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          description: Customer account status
+          example: "active"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Custom tags for customer categorization
+          example: ["high-value", "tech-savvy"]
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the customer was created
+          example: "2023-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the customer was last updated
+          example: "2023-06-15T14:45:00Z"
+
+    CustomerSummary:
+      type: object
+      required:
+        - customerId
+        - email
+        - firstName
+        - lastName
+        - status
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        phoneNumber:
+          type: string
+          example: "+1-555-123-4567"
+        segment:
+          type: string
+          enum: [premium, standard, basic]
+          example: "premium"
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          example: "active"
+        lastInteraction:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:45:00Z"
+
+    CustomerCreate:
+      type: object
+      required:
+        - email
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        phoneNumber:
+          type: string
+          example: "+1-555-123-4567"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-15"
+        address:
+          $ref: '#/components/schemas/Address'
+        preferences:
+          $ref: '#/components/schemas/CustomerPreferences'
+        segment:
+          type: string
+          enum: [premium, standard, basic]
+          default: "standard"
+          example: "premium"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["new-customer"]
+
+    CustomerUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        phoneNumber:
+          type: string
+          example: "+1-555-123-4567"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-15"
+        address:
+          $ref: '#/components/schemas/Address'
+        preferences:
+          $ref: '#/components/schemas/CustomerPreferences'
+        segment:
+          type: string
+          enum: [premium, standard, basic]
+          example: "premium"
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          example: "active"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["high-value", "tech-savvy"]
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "New York"
+        state:
+          type: string
+          example: "NY"
+        postalCode:
+          type: string
+          example: "10001"
+        country:
+          type: string
+          example: "USA"
+
+    CustomerPreferences:
+      type: object
+      properties:
+        communicationChannels:
+          type: array
+          items:
+            type: string
+            enum: [phone, chat, email, sms, social]
+          example: ["email", "chat"]
+        language:
+          type: string
+          example: "en-US"
+        timezone:
+          type: string
+          example: "America/New_York"
+        marketingOptIn:
+          type: boolean
+          example: true
+        notificationPreferences:
+          type: object
+          properties:
+            email:
+              type: boolean
+              example: true
+            sms:
+              type: boolean
+              example: false
+            push:
+              type: boolean
+              example: true
+
+    Interaction:
+      type: object
+      required:
+        - interactionId
+        - customerId
+        - channel
+        - type
+        - status
+        - startTime
+        - createdAt
+      properties:
+        interactionId:
+          type: string
+          format: uuid
+          example: "456e7890-e89b-12d3-a456-426614174000"
+        customerId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        channel:
+          type: string
+          enum: [phone, chat, email, sms, social]
+          example: "chat"
+        type:
+          type: string
+          enum: [inbound, outbound]
+          example: "inbound"
+        subject:
+          type: string
+          example: "Account inquiry"
+        summary:
+          type: string
+          example: "Customer inquired about account balance and recent transactions"
+        status:
+          type: string
+          enum: [active, completed, abandoned]
+          example: "completed"
+        agentId:
+          type: string
+          example: "agent-123"
+        startTime:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:30:00Z"
+        endTime:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:45:00Z"
+        duration:
+          type: integer
+          description: Duration in seconds
+          example: 900
+        satisfaction:
+          type: object
+          properties:
+            score:
+              type: integer
+              minimum: 1
+              maximum: 5
+              example: 4
+            feedback:
+              type: string
+              example: "Very helpful and resolved my issue quickly"
+        metadata:
+          type: object
+          additionalProperties: true
+          example:
+            queue: "support-tier1"
+            priority: "normal"
+            tags: ["account-inquiry", "resolved"]
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:45:00Z"
+
+    InteractionCreate:
+      type: object
+      required:
+        - channel
+        - type
+        - startTime
+      properties:
+        channel:
+          type: string
+          enum: [phone, chat, email, sms, social]
+          example: "chat"
+        type:
+          type: string
+          enum: [inbound, outbound]
+          example: "inbound"
+        subject:
+          type: string
+          example: "Account inquiry"
+        summary:
+          type: string
+          example: "Customer inquired about account balance"
+        agentId:
+          type: string
+          example: "agent-123"
+        startTime:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:30:00Z"
+        metadata:
+          type: object
+          additionalProperties: true
+          example:
+            queue: "support-tier1"
+            priority: "normal"
+
+    PaginationInfo:
+      type: object
+      required:
+        - currentPage
+        - pageSize
+        - totalItems
+        - totalPages
+      properties:
+        currentPage:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 20
+        totalItems:
+          type: integer
+          example: 150
+        totalPages:
+          type: integer
+          example: 8
+        hasNext:
+          type: boolean
+          example: true
+        hasPrevious:
+          type: boolean
+          example: false
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          example: "The request is invalid"
+        details:
+          type: string
+          example: "Email address is required"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-06-15T14:30:00Z"
+        requestId:
+          type: string
+          example: "req-123456"
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "INVALID_REQUEST"
+            message: "The request is invalid"
+            details: "Email address is required"
+            timestamp: "2023-06-15T14:30:00Z"
+            requestId: "req-123456"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "UNAUTHORIZED"
+            message: "Authentication required"
+            timestamp: "2023-06-15T14:30:00Z"
+            requestId: "req-123456"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "FORBIDDEN"
+            message: "Access denied"
+            timestamp: "2023-06-15T14:30:00Z"
+            requestId: "req-123456"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "NOT_FOUND"
+            message: "Customer not found"
+            timestamp: "2023-06-15T14:30:00Z"
+            requestId: "req-123456"
+
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "CONFLICT"
+            message: "Customer already exists"
+            timestamp: "2023-06-15T14:30:00Z"
+            requestId: "req-123456"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: "INTERNAL_ERROR"
+            message: "An unexpected error occurred"
+            timestamp: "2023-06-15T14:30:00Z"
+            requestId: "req-123456"
+
+tags:
+  - name: Customer Management
+    description: Customer profile management operations
+  - name: Customer Interactions
+    description: Customer interaction tracking and history
