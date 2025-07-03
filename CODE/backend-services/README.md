@@ -16,6 +16,13 @@ backend-services/
 
 ## Services
 
+### Member Service (GDPR-Compliant Example)
+- **Purpose**: Comprehensive member management with GDPR compliance
+- **Technology**: .NET 8 / ASP.NET Core
+- **Features**: Registration, profile management, consent tracking, data export/deletion
+- **Compliance**: Full GDPR implementation with privacy by design
+- **Location**: `member-service/`
+
 ### Customer Service
 - **Purpose**: Customer profile management and CRM integration
 - **Technology**: .NET Core/Java Spring Boot/Node.js

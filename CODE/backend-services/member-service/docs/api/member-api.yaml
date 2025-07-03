@@ -1,0 +1,695 @@
+openapi: 3.0.3
+info:
+  title: Member Service API
+  description: GDPR-compliant member management service with comprehensive privacy controls
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api-support@company.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.company.com/v1
+    description: Production server
+  - url: https://staging-api.company.com/v1
+    description: Staging server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /members/register:
+    post:
+      summary: Register a new member
+      description: Register a new member with GDPR-compliant consent tracking
+      operationId: registerMember
+      tags:
+        - Members
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterMemberRequest'
+      responses:
+        '201':
+          description: Member registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponse'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Member already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /members/{id}:
+    get:
+      summary: Get member profile
+      description: Retrieve member profile information
+      operationId: getMember
+      tags:
+        - Members
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Member profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update member profile
+      description: Update member profile information with audit trail
+      operationId: updateMember
+      tags:
+        - Members
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRequest'
+      responses:
+        '200':
+          description: Member profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+    delete:
+      summary: Delete member account
+      description: Delete member account (GDPR Right to be Forgotten)
+      operationId: deleteMember
+      tags:
+        - Members
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMemberRequest'
+      responses:
+        '200':
+          description: Member account deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /members/{id}/verify-email:
+    post:
+      summary: Verify member email
+      description: Verify member email address with verification code
+      operationId: verifyEmail
+      tags:
+        - Members
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Invalid verification code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /members/{id}/consent:
+    put:
+      summary: Update consent preferences
+      description: Update member's consent preferences for data processing
+      operationId: updateConsent
+      tags:
+        - Privacy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConsentRequest'
+      responses:
+        '200':
+          description: Consent preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /members/{id}/consent-history:
+    get:
+      summary: Get consent history
+      description: Retrieve member's consent history for audit purposes
+      operationId: getConsentHistory
+      tags:
+        - Privacy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Member ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Consent history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsentResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /privacy/export:
+    post:
+      summary: Export personal data
+      description: Export member's personal data (GDPR Data Portability)
+      operationId: exportPersonalData
+      tags:
+        - Privacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataExportRequest'
+      responses:
+        '200':
+          description: Data export initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExportResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /privacy/deletion:
+    post:
+      summary: Request account deletion
+      description: Request account deletion (GDPR Right to be Forgotten)
+      operationId: requestDeletion
+      tags:
+        - Privacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeletionRequest'
+      responses:
+        '200':
+          description: Deletion request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyRequestResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterMemberRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - hasDataProcessingConsent
+      properties:
+        firstName:
+          type: string
+          maxLength: 100
+          example: "John"
+        lastName:
+          type: string
+          maxLength: 100
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          maxLength: 20
+          example: "+1234567890"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-01"
+        gender:
+          type: string
+          enum: [Male, Female, Other, PreferNotToSay]
+          example: "Male"
+        address:
+          type: string
+          maxLength: 500
+          example: "123 Main St"
+        city:
+          type: string
+          maxLength: 100
+          example: "New York"
+        postalCode:
+          type: string
+          maxLength: 20
+          example: "10001"
+        country:
+          type: string
+          maxLength: 100
+          example: "USA"
+        hasDataProcessingConsent:
+          type: boolean
+          description: "Required consent for data processing"
+          example: true
+        hasMarketingConsent:
+          type: boolean
+          description: "Optional consent for marketing communications"
+          example: false
+        hasAnalyticsConsent:
+          type: boolean
+          description: "Optional consent for analytics"
+          example: false
+        hasNotificationConsent:
+          type: boolean
+          description: "Optional consent for notifications"
+          example: true
+
+    UpdateMemberRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          maxLength: 100
+          example: "John"
+        lastName:
+          type: string
+          maxLength: 100
+          example: "Doe"
+        phoneNumber:
+          type: string
+          maxLength: 20
+          example: "+1234567890"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-01"
+        gender:
+          type: string
+          enum: [Male, Female, Other, PreferNotToSay]
+          example: "Male"
+        address:
+          type: string
+          maxLength: 500
+          example: "123 Main St"
+        city:
+          type: string
+          maxLength: 100
+          example: "New York"
+        postalCode:
+          type: string
+          maxLength: 20
+          example: "10001"
+        country:
+          type: string
+          maxLength: 100
+          example: "USA"
+
+    DeleteMemberRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 500
+          description: "Reason for account deletion"
+          example: "User requested account deletion"
+        isHardDelete:
+          type: boolean
+          description: "Whether to permanently delete or anonymize data"
+          example: false
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - verificationCode
+      properties:
+        verificationCode:
+          type: string
+          maxLength: 10
+          example: "123456"
+
+    UpdateConsentRequest:
+      type: object
+      properties:
+        hasMarketingConsent:
+          type: boolean
+          example: true
+        hasAnalyticsConsent:
+          type: boolean
+          example: false
+        hasDataSharingConsent:
+          type: boolean
+          example: false
+        hasNotificationConsent:
+          type: boolean
+          example: true
+
+    DataExportRequest:
+      type: object
+      required:
+        - memberId
+      properties:
+        memberId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        format:
+          type: string
+          enum: [JSON, CSV, PDF]
+          example: "JSON"
+
+    DeletionRequest:
+      type: object
+      required:
+        - memberId
+        - reason
+      properties:
+        memberId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        reason:
+          type: string
+          maxLength: 500
+          example: "User requested account deletion"
+
+    MemberResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          example: "+1234567890"
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-01"
+        gender:
+          type: string
+          example: "Male"
+        address:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "New York"
+        postalCode:
+          type: string
+          example: "10001"
+        country:
+          type: string
+          example: "USA"
+        isActive:
+          type: boolean
+          example: true
+        isEmailVerified:
+          type: boolean
+          example: true
+        isPhoneVerified:
+          type: boolean
+          example: false
+        hasMarketingConsent:
+          type: boolean
+          example: false
+        hasAnalyticsConsent:
+          type: boolean
+          example: false
+        hasDataSharingConsent:
+          type: boolean
+          example: false
+        hasNotificationConsent:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        consentUpdatedAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+
+    ConsentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        consentType:
+          type: string
+          example: "Marketing"
+        purpose:
+          type: string
+          example: "Marketing communications"
+        isGranted:
+          type: boolean
+          example: true
+        consentDate:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+        withdrawnDate:
+          type: string
+          format: date-time
+          example: "2023-06-01T00:00:00Z"
+        consentMethod:
+          type: string
+          example: "Web Registration"
+        legalBasis:
+          type: string
+          example: "Consent"
+        dataCategory:
+          type: string
+          example: "Personal"
+        isActive:
+          type: boolean
+          example: true
+
+    DataExportResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          example: "Processing"
+        downloadUrl:
+          type: string
+          format: uri
+          example: "https://api.company.com/downloads/data-export-123.json"
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2023-01-08T00:00:00Z"
+
+    PrivacyRequestResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          example: "Submitted"
+        estimatedCompletionDate:
+          type: string
+          format: date-time
+          example: "2023-01-31T00:00:00Z"
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Error message"
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+
+    ValidationError:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "email"
+              message:
+                type: string
+                example: "Email is required"
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+
+tags:
+  - name: Members
+    description: Member management operations
+  - name: Privacy
+    description: GDPR privacy and data protection operations
