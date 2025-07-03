@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions for Enterprise CX Solution
+# GitHub Copilot Instructions for Microservice Context Repository
 
 ## Repository Context
 This repository contains the complete documentation and implementation for an enterprise customer experience (CX) solution built on Azure and AWS cloud platforms. The solution includes:
